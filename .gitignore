@@ -63,3 +63,8 @@ CATKIN_IGNORE
 
 # Jetbrains stuff
 .idea/
+
+*.bag
+
+# Pictures
+*.png
