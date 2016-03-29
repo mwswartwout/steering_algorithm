@@ -26,7 +26,7 @@ SteeringController::SteeringController(ros::NodeHandle* nodehandle):nh_(*nodehan
     }
     ROS_INFO("constructor: got an odom message");    
     
-    /*
+    
     tfListener_ = new tf::TransformListener; 
  
     bool tferr=true;
@@ -34,9 +34,9 @@ SteeringController::SteeringController(ros::NodeHandle* nodehandle):nh_(*nodehan
     while (tferr) {
         tferr=false;
         try {
-                //try to lookup transform from target frame "odom" to source frame "map"
+            //try to lookup transform from target frame "odom" to source frame "map"
             //The direction of the transform returned will be from the target_frame to the source_frame. 
-             //Which if applied to data, will transform data in the source_frame into the target_frame. See tf/CoordinateFrameConventions#Transform_Direction
+            //Which if applied to data, will transform data in the source_frame into the target_frame. See tf/CoordinateFrameConventions#Transform_Direction
                 tfListener_->lookupTransform("odom", "map", ros::Time(0), mapToOdom_);
             } catch(tf::TransformException &exception) {
                 ROS_ERROR("%s", exception.what());
@@ -47,7 +47,6 @@ SteeringController::SteeringController(ros::NodeHandle* nodehandle):nh_(*nodehan
     }
     ROS_INFO("tf is good");
     // from now on, tfListener will keep track of transforms from map frame to target frame
-    */
     
     //initialize desired state, in case this is not yet being published adequately
     des_state_ = current_odom_;  // use the current odom state
@@ -101,19 +100,26 @@ void SteeringController::initializePublishers()
     //steering_errs_publisher_ =  nh_.advertise<std_msgs::Float32MultiArray>("steering_errs",1, true);
 }
 
-
+geometry_msgs::Pose SteeringController::unstampPose(geometry_msgs::PoseStamped pose_stamped) {
+    geometry_msgs::Pose pose;
+    pose.orientation = pose_stamped.orientation;
+    pose.position = pose_stamped.position;
+    return pose;
+}
 
 void SteeringController::odomCallback(const nav_msgs::Odometry& odom_rcvd) {
     // copy some of the components of the received message into member vars
     // we care about speed and spin, as well as position estimates x,y and heading
-    current_odom_ = odom_rcvd; // save the entire message
+    //current_odom_ = odom_rcvd; // save the entire message
     // but also pick apart pieces, for ease of use
-    odom_pose_ = odom_rcvd.pose.pose;
+    geometry_msgs::Pose odom_pose_;
+    // Lets get this odom in map frame rather than odom
+    tfListener_->transformPose("map", unstampPose(odom_rcvd.pose.pose), odom_pose_);
     odom_vel_ = odom_rcvd.twist.twist.linear.x;
     odom_omega_ = odom_rcvd.twist.twist.angular.z;
-    odom_x_ = odom_rcvd.pose.pose.position.x;
-    odom_y_ = odom_rcvd.pose.pose.position.y;
-    odom_quat_ = odom_rcvd.pose.pose.orientation;
+    odom_x_ = odom_pose_.pose.pose.position.x;
+    odom_y_ = odom_pose_.pose.pose.position.y;
+    odom_quat_ = odom_pose_.pose.pose.orientation;
     //odom publishes orientation as a quaternion.  Convert this to a simple heading
     odom_phi_ = convertPlanarQuat2Phi(odom_quat_); // cheap conversion from quaternion to heading for planar motion
     // let's put odom x,y in an Eigen-style 2x1 vector; convenient for linear algebra operations
@@ -126,12 +132,13 @@ void SteeringController::desStateCallback(const nav_msgs::Odometry& des_state_rc
     // we care about speed and spin, as well as position estimates x,y and heading
     des_state_ = des_state_rcvd; // save the entire message
     // but also pick apart pieces, for ease of use
-    des_state_pose_ = des_state_rcvd.pose.pose;
+    geometry_msgs::Pose des_state_pose_;
+    tfListener_->transformPose("map", unstampPose(des_state_rcvd.pose.pose), des_state_pose_);
     des_state_vel_ = des_state_rcvd.twist.twist.linear.x;
     des_state_omega_ = des_state_rcvd.twist.twist.angular.z;
-    des_state_x_ = des_state_rcvd.pose.pose.position.x;
-    des_state_y_ = des_state_rcvd.pose.pose.position.y;
-    des_state_quat_ = des_state_rcvd.pose.pose.orientation;
+    des_state_x_ = des_state_pose_.pose.pose.position.x;
+    des_state_y_ = des_state_pose_.pose.pose.position.y;
+    des_state_quat_ = des_state_pose_.pose.pose.orientation;
     //odom publishes orientation as a quaternion.  Convert this to a simple heading
     des_state_phi_ = convertPlanarQuat2Phi(des_state_quat_); // cheap conversion from quaternion to heading for planar motion
     // fill in an Eigen-style 2x1 vector as well--potentially convenient for linear algebra operations    
