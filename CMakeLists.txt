@@ -11,6 +11,7 @@ find_package(catkin REQUIRED COMPONENTS
     nav_msgs
     geometry_msgs
     cwru_srv
+    mobot_pub_des_state
 )
 
 ## System dependencies are found with CMake's conventions
@@ -132,6 +133,7 @@ include_directories(
 
 ## Declare a C++ executable
 add_executable(linear_steering_wrt_odom src/linear_steering_wrt_odom.cpp)
+add_executable(pub_des_state_path_client_escape src/pub_des_state_path_client_escape.cpp)
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
@@ -141,6 +143,8 @@ add_executable(linear_steering_wrt_odom src/linear_steering_wrt_odom.cpp)
 target_link_libraries(linear_steering_wrt_odom
    ${catkin_LIBRARIES}
 )
+
+target_link_libraries(pub_des_state_path_client_escape ${catkin_LIBRARIES})
 
 #############
 ## Install ##
