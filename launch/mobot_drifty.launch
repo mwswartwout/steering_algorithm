@@ -3,5 +3,5 @@
     <include file="$(find steering_algorithm)/launch/mobot_starting_pen.launch.xml"/>
     <node pkg="mobot_drifty_odom" type="mobot_drifty_odom" name="mobot_drifty_odom"/>
     <node pkg="mobot_pub_des_state" type="pub_des_state_path_client_3x3" name="pub_des_state_path_client_3x3"/>
-    <node pkg="steering_algorithm" type="linear_steering_wrt_odom" name="linear_steering_wrt_odom"/>
+    <node pkg="steering_algorithm" type="linear_steering_wrt_odom" name="linear_steering_wrt_odom_drifty"/>
 </launch>
