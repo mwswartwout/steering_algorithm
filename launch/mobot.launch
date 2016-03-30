@@ -1,7 +1,10 @@
 <launch>
     <include file="$(find gazebo_ros)/launch/empty_world.launch"/>
-    <include file="$(find mobot_urdf)/launch/mobot.launch"/>
-    <node name="alpha_mobot_pub_des_state" pkg="alpha_mobot_pub_des_state" type="alpha_mobot_pub_des_state"/>
-    <node name="alpha_pub_des_state_path_client" pkg="alpha_mobot_pub_des_state" type="alpha_pub_des_state_path_client"/>
-    <node name="linear_steering" pkg="steering_algorithm" type="linear_steering_wrt_odom"/>
+    <include file="$(find steering_algorithm)/launch/mobot_starting_pen.launch"/>
+    <node pkg="map_server" type="map_server" name="map_server" args="$(find maps)/starting_pen/starting_pen_map.yaml"/>
+    <node pkg="mobot_drifty_odom" type="mobot_drifty_odom" name="mobot_drifty_odom"/>
+    <node pkg="odom_tf" type="odom_tf" name="odom_tf"/>
+    <node pkg="amcl" type="amcl" name="amcl"/>
+    <node pkg="mobot_pub_des_state" type="pub_des_state_path_client_3x3" name="pub_des_state_path_client_3x3"/>
+    <node pkg="steering_algorithm" type="linear_steering_wrt_odom" name="linear_steering_wrt_odom"/>
 </launch>
