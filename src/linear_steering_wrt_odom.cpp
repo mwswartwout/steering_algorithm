@@ -24,9 +24,8 @@ SteeringController::SteeringController(ros::NodeHandle* nodehandle):nh_(*nodehan
         std::cout << ".";
         ros::spinOnce();
     }
-    ROS_INFO("constructor: got an odom message");    
-    
-    /*
+    ROS_INFO("constructor: got an odom message");
+
     tfListener_ = new tf::TransformListener; 
  
     bool tferr=true;
@@ -47,7 +46,6 @@ SteeringController::SteeringController(ros::NodeHandle* nodehandle):nh_(*nodehan
     }
     ROS_INFO("tf is good");
     // from now on, tfListener will keep track of transforms from map frame to target frame
-    */
     
     //initialize desired state, in case this is not yet being published adequately
     des_state_ = current_odom_;  // use the current odom state
@@ -67,14 +65,13 @@ SteeringController::SteeringController(ros::NodeHandle* nodehandle):nh_(*nodehan
     twist_cmd_.angular.z = 0.0;
 
     twist_cmd2_.twist = twist_cmd_; // copy the twist command into twist2 message
-    twist_cmd2_.header.stamp = ros::Time::now(); // look up the time and put it in the header  
-
+    twist_cmd2_.header.stamp = ros::Time::now(); // look up the time and put it in the header
 }
 
 //member helper function to set up subscribers;
 void SteeringController::initializeSubscribers() {
     ROS_INFO("Initializing Subscribers: odom and desState");
-    odom_subscriber_ = nh_.subscribe("/odom", 1, &SteeringController::odomCallback, this); //subscribe to odom messages
+    odom_subscriber_ = nh_.subscribe("drifty_odom", 1, &SteeringController::odomCallback, this); //subscribe to odom messages
     // add more subscribers here, as needed
     des_state_subscriber_ = nh_.subscribe("/desState", 1, &SteeringController::desStateCallback, this); // for desired state messages
 }
@@ -101,19 +98,29 @@ void SteeringController::initializePublishers()
     //steering_errs_publisher_ =  nh_.advertise<std_msgs::Float32MultiArray>("steering_errs",1, true);
 }
 
-
+geometry_msgs::PoseStamped stampPose(geometry_msgs::Pose pose, std_msgs::Header header) {
+    geometry_msgs::PoseStamped stampedPose;
+    stampedPose.header = header;
+    stampedPose.pose = pose;
+    return stampedPose;
+}
 
 void SteeringController::odomCallback(const nav_msgs::Odometry& odom_rcvd) {
     // copy some of the components of the received message into member vars
     // we care about speed and spin, as well as position estimates x,y and heading
     current_odom_ = odom_rcvd; // save the entire message
+    std_msgs::Header header = odom_rcvd.header;
     // but also pick apart pieces, for ease of use
-    odom_pose_ = odom_rcvd.pose.pose;
+    if (tfListener_->canTransform("odom", "map", ros::Time(0))) {
+    //    tfListener_->transformPose("map", stampPose(odom_rcvd.pose.pose, header), odom_pose_);
+    //    odom_x_ = odom_pose_.pose.position.x;
+    //    odom_y_ = odom_pose_.pose.position.y;
+    //   odom_quat_ = odom_pose_.pose.orientation;
+    }
+
     odom_vel_ = odom_rcvd.twist.twist.linear.x;
     odom_omega_ = odom_rcvd.twist.twist.angular.z;
-    odom_x_ = odom_rcvd.pose.pose.position.x;
-    odom_y_ = odom_rcvd.pose.pose.position.y;
-    odom_quat_ = odom_rcvd.pose.pose.orientation;
+
     //odom publishes orientation as a quaternion.  Convert this to a simple heading
     odom_phi_ = convertPlanarQuat2Phi(odom_quat_); // cheap conversion from quaternion to heading for planar motion
     // let's put odom x,y in an Eigen-style 2x1 vector; convenient for linear algebra operations
@@ -125,13 +132,19 @@ void SteeringController::desStateCallback(const nav_msgs::Odometry& des_state_rc
     // copy some of the components of the received message into member vars
     // we care about speed and spin, as well as position estimates x,y and heading
     des_state_ = des_state_rcvd; // save the entire message
+    std_msgs::Header header = des_state_rcvd.header;
     // but also pick apart pieces, for ease of use
+    if (tfListener_->canTransform("odom", "map", ros::Time(0))) {
+    //    tfListener_->transformPose("map", stampPose(des_state_rcvd.pose.pose, header), odom_pose_);
+    //    odom_x_ = odom_pose_.pose.position.x;
+    //    odom_y_ = odom_pose_.pose.position.y;
+    //    odom_quat_ = odom_pose_.pose.orientation;
+    }
+
     des_state_pose_ = des_state_rcvd.pose.pose;
     des_state_vel_ = des_state_rcvd.twist.twist.linear.x;
     des_state_omega_ = des_state_rcvd.twist.twist.angular.z;
-    des_state_x_ = des_state_rcvd.pose.pose.position.x;
-    des_state_y_ = des_state_rcvd.pose.pose.position.y;
-    des_state_quat_ = des_state_rcvd.pose.pose.orientation;
+
     //odom publishes orientation as a quaternion.  Convert this to a simple heading
     des_state_phi_ = convertPlanarQuat2Phi(des_state_quat_); // cheap conversion from quaternion to heading for planar motion
     // fill in an Eigen-style 2x1 vector as well--potentially convenient for linear algebra operations    

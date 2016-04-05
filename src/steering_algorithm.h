@@ -75,7 +75,7 @@ private:
 
     //state values from odometry; these will get filled in by odom callback
     nav_msgs::Odometry current_odom_; // fill in these objects from callbacks
-    geometry_msgs::Pose odom_pose_;    
+    geometry_msgs::PoseStamped odom_pose_;
     double odom_vel_;
     double odom_omega_;
     double odom_x_;
