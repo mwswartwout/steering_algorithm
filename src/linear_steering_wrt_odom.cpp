@@ -13,10 +13,32 @@
 SteeringController::SteeringController(ros::NodeHandle* nodehandle):nh_(*nodehandle)
 { // constructor
     ROS_INFO("in class constructor of SteeringController");
+
+    tfListener_ = new tf::TransformListener;
+
+    bool tferr=true;
+    ROS_INFO("waiting for tf...");
+    while (tferr) {
+        tferr=false;
+        try {
+            //try to lookup transform from target frame "odom" to source frame "map"
+            //The direction of the transform returned will be from the target_frame to the source_frame.
+            //Which if applied to data, will transform data in the source_frame into the target_frame. See tf/CoordinateFrameConventions#Transform_Direction
+            tfListener_->lookupTransform("odom", "map", ros::Time(0), mapToOdom_);
+        } catch(tf::TransformException &exception) {
+            ROS_ERROR("%s", exception.what());
+            tferr=true;
+            ros::Duration(0.5).sleep(); // sleep for half a second
+            ros::spinOnce();
+        }
+    }
+    ROS_INFO("tf is good");
+    // from now on, tfListener will keep track of transforms from map frame to target frame
+
     initializeSubscribers(); // package up the messy work of creating subscribers; do this overhead in constructor
     initializePublishers();
     //initializeServices();
-    
+
     odom_phi_ = 1000.0; // put in impossible value for heading; test this value to make sure we have received a viable odom message
     ROS_INFO("waiting for valid odom message...");
     while (odom_phi_ > 500.0) {
@@ -25,27 +47,6 @@ SteeringController::SteeringController(ros::NodeHandle* nodehandle):nh_(*nodehan
         ros::spinOnce();
     }
     ROS_INFO("constructor: got an odom message");
-
-    tfListener_ = new tf::TransformListener; 
- 
-    bool tferr=true;
-    ROS_INFO("waiting for tf...");
-    while (tferr) {
-        tferr=false;
-        try {
-                //try to lookup transform from target frame "odom" to source frame "map"
-            //The direction of the transform returned will be from the target_frame to the source_frame. 
-             //Which if applied to data, will transform data in the source_frame into the target_frame. See tf/CoordinateFrameConventions#Transform_Direction
-                tfListener_->lookupTransform("odom", "map", ros::Time(0), mapToOdom_);
-            } catch(tf::TransformException &exception) {
-                ROS_ERROR("%s", exception.what());
-                tferr=true;
-                ros::Duration(0.5).sleep(); // sleep for half a second
-                ros::spinOnce();                
-            }   
-    }
-    ROS_INFO("tf is good");
-    // from now on, tfListener will keep track of transforms from map frame to target frame
     
     //initialize desired state, in case this is not yet being published adequately
     des_state_ = current_odom_;  // use the current odom state
@@ -112,10 +113,10 @@ void SteeringController::odomCallback(const nav_msgs::Odometry& odom_rcvd) {
     std_msgs::Header header = odom_rcvd.header;
     // but also pick apart pieces, for ease of use
     if (tfListener_->canTransform("odom", "map", ros::Time(0))) {
-    //    tfListener_->transformPose("map", stampPose(odom_rcvd.pose.pose, header), odom_pose_);
-    //    odom_x_ = odom_pose_.pose.position.x;
-    //    odom_y_ = odom_pose_.pose.position.y;
-    //   odom_quat_ = odom_pose_.pose.orientation;
+        tfListener_->transformPose("map", stampPose(odom_rcvd.pose.pose, header), odom_pose_);
+        odom_x_ = odom_pose_.pose.position.x;
+        odom_y_ = odom_pose_.pose.position.y;
+       odom_quat_ = odom_pose_.pose.orientation;
     }
 
     odom_vel_ = odom_rcvd.twist.twist.linear.x;
@@ -135,10 +136,10 @@ void SteeringController::desStateCallback(const nav_msgs::Odometry& des_state_rc
     std_msgs::Header header = des_state_rcvd.header;
     // but also pick apart pieces, for ease of use
     if (tfListener_->canTransform("odom", "map", ros::Time(0))) {
-    //    tfListener_->transformPose("map", stampPose(des_state_rcvd.pose.pose, header), odom_pose_);
-    //    odom_x_ = odom_pose_.pose.position.x;
-    //    odom_y_ = odom_pose_.pose.position.y;
-    //    odom_quat_ = odom_pose_.pose.orientation;
+        tfListener_->transformPose("map", stampPose(des_state_rcvd.pose.pose, header), odom_pose_);
+        des_state_x_ = odom_pose_.pose.position.x;
+        des_state_y_ = odom_pose_.pose.position.y;
+        des_state_quat_ = odom_pose_.pose.orientation;
     }
 
     des_state_pose_ = des_state_rcvd.pose.pose;
@@ -262,7 +263,7 @@ int main(int argc, char** argv)
     SteeringController steeringController(&nh);  //instantiate an ExampleRosClass object and pass in pointer to nodehandle for constructor to use
     ros::Rate sleep_timer(UPDATE_RATE); //a timer for desired rate, e.g. 50Hz
    
-    ROS_INFO:("starting steering algorithm");
+    ROS_INFO("starting steering algorithm");
     while (ros::ok()) {
         steeringController.lin_steering_algorithm(); // compute and publish twist commands and cmd_vel and cmd_vel_stamped
 
