@@ -38,15 +38,25 @@ int main(int argc, char **argv) {
     pose_stamped.header.frame_id = "world";
     geometry_msgs::Pose pose;
 
-    ros::Rate timer(.1); // .1 hz
-    timer.sleep();
-
     //1
-    pose.position.x = 3.5; // say desired x-coord is 3
+
+    pose.position.x = 1; // say desired x-coord is 3
     pose.position.y = 0.0;
     pose.position.z = 0.0; // let's hope so!
     quat = convertPlanarPhi2Quaternion(0);
     pose.orientation = quat;
+    pose_stamped.pose = pose;
+    path_srv.request.path.poses.push_back(pose_stamped);
+
+    pose.position.x = 2;
+    pose_stamped.pose = pose;
+    path_srv.request.path.poses.push_back(pose_stamped);
+
+    pose.position.x = 3;
+    pose_stamped.pose = pose;
+    path_srv.request.path.poses.push_back(pose_stamped);
+
+    pose.position.x = 3.5;
     pose_stamped.pose = pose;
     path_srv.request.path.poses.push_back(pose_stamped);
 

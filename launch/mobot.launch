@@ -11,6 +11,9 @@
     <node pkg="mobot_drifty_odom" type="mobot_drifty_odom" name="mobot_drifty_odom"/>
     <node pkg="odom_tf" type="odom_tf" name="odom_tf"/>
     <node pkg="amcl" type="amcl" name="amcl"/>
+    <node pkg="my_lidar_alarm" type="lidar_alarm.py" name="lidar_alarm"/>
+    <node pkg="alpha_mobot_pub_des_state" type="estop" name="estop" output="screen"/>
+    <node name="alpha_mobot_pub_des_state_startup" pkg="alpha_mobot_pub_des_state" type="alpha_mobot_pub_des_state_startup" />
     <!--node pkg="steering_algorithm" type="pub_des_state_path_client_escape" name="pub_des_state_path_client_escape"/-->
-    <node pkg="steering_algorithm" type="linear_steering_wrt_odom" name="linear_steering_wrt_odom" output="screen"/>
+    <!--node pkg="steering_algorithm" type="linear_steering_wrt_odom" name="linear_steering_wrt_odom" output="screen"/-->
 </launch>

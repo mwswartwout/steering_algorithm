@@ -19,7 +19,7 @@
     rosrun mobot_pub_des_state open_loop_controller
     rosrun mobot_pub_des_state mobot_pub_des_state
     -->
-    <node name="mobot_pub_des_state_startup" pkg="mobot_pub_des_state" type="mobot_pub_des_state_startup" />
+
 
     <!-- launch rviz using a specific config file -->
      <group if="$(arg gui)">
