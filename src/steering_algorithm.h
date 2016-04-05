@@ -25,7 +25,7 @@
 #include <geometry_msgs/PointStamped.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <nav_msgs/Odometry.h>
-#include <tf/transform_listener.h>
+ #include <tf/transform_listener.h>
 
 //Eigen is useful for linear algebra
 //#include <Eigen/Eigen>
@@ -34,12 +34,12 @@
 //#include <Eigen/LU>
 
 const double UPDATE_RATE = 50.0; // choose the desired-state publication update rate
-const double K_PHI= 8.0; // control gains for steering
-const double K_DISP = 2.0;
+const double K_PHI= 10.0; // control gains for steering
+const double K_DISP = 3.0;
 const double K_TRIP_DIST = 1.0;
 // dynamic limitations:  these apply to the steering controller; they may be larger than the limits on des state generation
-const double MAX_SPEED = 0.25; // m/sec; adjust this
-const double MAX_OMEGA = 0.25; //1.0; // rad/sec; adjust this
+const double MAX_SPEED = 1.0; // m/sec; adjust this
+const double MAX_OMEGA = 1.0; //1.0; // rad/sec; adjust this
 
 
 // define a class, including a constructor, member variables and member functions
@@ -105,9 +105,7 @@ private:
  
     void odomCallback(const nav_msgs::Odometry& odom_rcvd);
     void desStateCallback(const nav_msgs::Odometry& des_state_rcvd);    
-
-    geometry_msgs::Pose unstampPose(geometry_msgs::PoseStamped pose_stamped);
-    geometry_msgs::PoseStamped stampPoseWHeader(geometry_msgs::Pose pose, std_msgs::Header header);
+        
 }; 
 
 #endif  
